@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Name }}
+  labels:
+    kudo.dev/instance: {{ .Name }}
+    version: master  
+    component: api  
+spec:
+  replicas: {{ .Params.replicas }}
+  selector:
+    matchLabels:
+        kudo.dev/instance: {{ .Name }}
+        version: master  
+        component: api
+  template:
+    metadata:
+      labels:
+        kudo.dev/instance: {{ .Name }}
+        version: master 
+        component: api 
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: HEADER
+          value: "{{ .Params.prefix }} <----> {{ .Params.postfix }}"
+        - name: JUST_HEADER
+          value: "true"
+        image: {{ .Params.image }}:{{ .Params.tag}}
+        ports:
+        - containerPort: {{ .Params.port }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Params.port }}
+          initialDelaySeconds: 1
+          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Params.port }}
+          initialDelaySeconds: 1
+          periodSeconds: 3

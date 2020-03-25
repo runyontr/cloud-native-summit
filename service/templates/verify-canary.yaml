@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Name }}-verify
+spec:
+  template:
+    spec:
+      containers:
+      - name: verify
+        image: busybox
+        command: ["sleep",  "60"]
+      restartPolicy: Never
+  backoffLimit: 4

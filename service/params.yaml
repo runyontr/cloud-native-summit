@@ -1,0 +1,21 @@
+apiVersion: kudo.dev/v1beta1
+parameters: 
+  - name: image
+    description: Docker image to use
+    default: runyonsolutions/request-log
+  - name: tag
+    description: Docker tag to deploy
+    default: latest
+  - name: port
+    description: Port hosting app
+    default: 80
+  - name: replicas
+    description: How many to run
+    default: 3
+    trigger: deploy
+  - name: prefix
+    description: First part of the message
+    trigger: blue-green
+  - name: postfix
+    description: Last part of the message
+    trigger: canary

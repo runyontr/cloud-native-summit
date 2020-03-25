@@ -1,0 +1,132 @@
+apiVersion: kudo.dev/v1beta1
+kudoVersion: 0.10.0
+kubernetesVersion: 1.13.0
+name: service
+operatorVersion: 0.1.0
+maintainers:
+- name: Tom Runyon
+  email: <tom@runyon.dev>
+plans:
+  deploy:
+    strategy: serial
+    phases:
+      - name: main
+        strategy: serial
+        steps:
+          - name: deployment
+            tasks:
+              - update-deployment
+          - name: service
+            tasks:
+              - update-service
+  blue-green:
+    strategy: serial
+    phases:
+      - name: green
+        strategy: serial
+        steps:
+          - name: deployment
+            tasks:
+              - update-green-deployment
+          - name: service
+            tasks:
+              - update-green-service
+      - name: blue
+        strategy: serial
+        steps:
+          - name: deployment
+            tasks:
+              - update-deployment
+          - name: service
+            tasks:
+              - update-service
+      - name: cleanup
+        strategy: serial
+        steps:
+          - name: deployment
+            tasks:
+              - delete-green-deployment
+  canary:
+    strategy: serial
+    phases:
+      - name: canary
+        strategy: serial
+        steps:
+          - name: canary-deployment
+            tasks:
+              - canary-deployment
+              - update-service-canary
+      - name: verify-canary
+        strategy: serial
+        steps:
+          - name: verify-canary
+            tasks:
+              - verify-canary
+      - name: update-deployment
+        strategy: serial
+        steps:
+          - name: deployment
+            tasks:
+              - update-deployment
+              - update-service
+          - name: cleanup-canary
+            tasks:
+              - cleanup-canary
+              - cleanup-verify-canary
+tasks:
+- name: create
+  kind: Apply
+  spec:
+    resources:
+      - deployment.yaml
+      - service.yaml
+- name: update-service-canary
+  kind: Apply
+  spec:
+    resources:
+      - canary-service.yaml
+- name: update-green-deployment
+  kind: Apply
+  spec:
+    resources:
+      - green-deployment.yaml
+- name: update-deployment
+  kind: Apply
+  spec:
+    resources:
+      - deployment.yaml 
+- name: update-service
+  kind: Apply
+  spec:
+    resources:
+      - service.yaml
+- name: update-green-service
+  kind: Apply
+  spec:
+    resources:
+      - green-service.yaml
+- name: delete-green-deployment
+  kind: Delete
+  spec:
+    resources:
+      - green-deployment.yaml
+- name: canary-deployment
+  kind: Apply
+  spec:
+    resources:
+      - canary-deployment.yaml
+- name: verify-canary
+  kind: Apply
+  spec:
+    resources:
+      - verify-canary.yaml
+- name: cleanup-verify-canary
+  kind: Delete
+  spec:
+    resources:
+      - verify-canary.yaml
+- name: cleanup-canary
+  kind: Delete
+  spec:
+    resources:
+      - canary-deployment.yaml

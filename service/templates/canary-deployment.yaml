@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Name }}-canary
+  labels:
+    kudo.dev/instance: {{ .Name }}
+    version: canary    
+    component: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        kudo.dev/instance: {{ .Name }}
+        version: canary  
+        component: api
+  template:
+    metadata:
+      labels:
+        kudo.dev/instance: {{ .Name }}
+        version: canary  
+        component: api
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: HEADER
+          value: "{{ .Params.prefix }} <----> {{ .Params.postfix }}"
+        - name: JUST_HEADER
+          value: "true"
+        image: {{ .Params.image }}:{{ .Params.tag}}
+        ports:
+        - containerPort: {{ .Params.port }}
+        readinessProbe:
+          httpGet:
+            path: /
+            port: {{ .Params.port }}
+          initialDelaySeconds: 1
+          periodSeconds: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: {{ .Params.port }}
+          initialDelaySeconds: 1
+          periodSeconds: 3
